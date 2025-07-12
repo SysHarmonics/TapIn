@@ -53,12 +53,10 @@ int create_bind_socket(struct addrinfo *servinfo)
                 continue;
             }
 
-            setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+            setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof yes);
 
-            if (bind(listener, p->ai_addr, p->ai_addrlen) < 0) {
+            if (bind(listener, p->ai_addr, p->ai_addrlen) == 0) break;
                 close(listener);
-                continue;
-            }
 
             break; //successful conection if reached here
         }
