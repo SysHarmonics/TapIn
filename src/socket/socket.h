@@ -1,6 +1,9 @@
 #ifndef TAPIN_SOCKET_H
 #define TAPIN_SOCKET_H
 
+#include <stddef.h>
+#include <sys/types.h>
+
 int tcp_listen(const char *port);
 int tcp_accept(int listener);
 int tcp_connect(const char *host, const char *port);

@@ -1,46 +1,30 @@
-CC=gcc
-CFLAGS=-Wall -g
-CLIENT_DIR = src/SocketClient
-SERV_DIR = src/SocketServer
+CC       := gcc
+CFLAGS   := -Wall -O2 -g -std=c11
+LDFLAGS  := -lsodium -lpthread
+BIN      := tapin
 
-CLIENT_LIB=src/Library/Client
-SERV_LIB=src/Library/Server
+SRC := \
+    src/main.c \
+    src/socket/socket.c \
+    src/crypto/crypto.c \
+    src/handshake/handshake.c
 
-#Default target
-all: client server
+OBJ := $(SRC:.c=.o)
 
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+    BREW_PREFIX := $(shell brew --prefix libsodium)
+    CFLAGS  += -I$(BREW_PREFIX)/include
+    LDFLAGS += -L$(BREW_PREFIX)/lib
+endif
 
-# Create client objects
-$(CLIENT_DIR)/%.o: $(CLIENT_DIR)/%.c
-		$(CC) -c -o $@ $< $(CFLAGS)
+all: $(BIN)
 
-$(CLIENT_LIB)/%.o: $(CLIENT_LIB)/%.c $(CLIENT_LIB)/client.h
-		$(CC) -c -o $@ $< $(CFLAGS)
+$(BIN): $(OBJ)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
-
-# Create server objects
-$(SERV_DIR)/%.o: $(SERV_DIR)/%.c
-		$(CC) -c -o $@ $< $(CFLAGS)
-
-$(SERV_LIB)/%.o: $(SERV_LIB)/%.c $(SERV_LIB)/server.h 
-		$(CC) -c -o $@ $< $(CFLAGS)
-
-
-# Object files for the client and server
-CLIENT_OBJS=$(CLIENT_DIR)/main.o $(CLIENT_LIB)/client.o
-SERVER_OBJS=$(SERV_DIR)/main.o $(SERV_LIB)/server.o
-
-
-# Client executable
-client: $(CLIENT_OBJS)
-	$(CC) -o client $(CLIENT_OBJS) $(CFLAGS)
-
-
-# Server executable
-server: $(SERVER_OBJS)
-	$(CC) -o server $(SERVER_OBJS) $(CFLAGS)
-
-.PHONY: clean
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(CLIENT_LIB)/*.o client $(SERVER_LIB)/*.o server
+	rm -f $(OBJ) $(BIN)
