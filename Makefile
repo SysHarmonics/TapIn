@@ -7,7 +7,8 @@ SRC := \
     src/main.c \
     src/socket/socket.c \
     src/crypto/crypto.c \
-    src/TapIn/TapIn.c
+    src/synack/tapin.c \
+	src/invite/invite.c
 
 OBJ := $(SRC:.c=.o)
 
