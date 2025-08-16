@@ -57,17 +57,19 @@ int main(int argc, char *argv[]) {
     const char *connect_port = NULL;
     const char *invite_code = NULL;
     const char *password = NULL;
+    int rekey_requested = 0;
 
     static struct option long_options[] = {
         {"listen",   required_argument, 0, 'l'},
         {"connect",  required_argument, 0, 'c'},
         {"invite",   required_argument, 0, 'i'},
         {"password", required_argument, 0, 'p'},
+        {"rekey",    no_argument,       0, 'r'},
         {0, 0, 0, 0}
     };
 
     int option;
-    while ((option = getopt_long(argc, argv, "l:c:i:p", long_options, NULL)) != -1) {
+    while ((option = getopt_long(argc, argv, "l:c:i:p:r", long_options, NULL)) != -1) {
         switch (option) {
             case 'l':
                 listen_port = optarg;
@@ -89,9 +91,12 @@ int main(int argc, char *argv[]) {
             case 'p':
                 password =optarg;
                 break;
+            case 'r':
+                rekey_requested =1;
+                break;
 
             default: 
-                fprintf(stderr, "Usage: %s [--listen <port>] [--connect <host:port>] [--invite <code>] [--password <secret>]\n", argv[0]);
+                fprintf(stderr, "Usage: %s [--listen <port>] [--connect <host:port>] [--invite <code>] [--password <secret>] [--rekey]\n", argv[0]);
                 exit(1);
         }
     }
@@ -162,12 +167,33 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    if (rekey_requested) {
+        printf("[*] Rekeying session...\n");
+
+        //wipe the keys from memory
+        sodium_memzero(peer.k_rx, sizeof(peer.k_rx));
+        sodium_memzero(peer.k_tx, sizeof(peer.k_tx));
+
+        //perform key exchange again
+        if (tapped_in(sockfd, initiator, invite_code, password, peer.k_rx, peer.k_tx) != 0) {
+            fprintf(stderr, "[-] Rekey failed.\n");
+            close(sockfd);
+            return 1;
+        }
+
+        printf("[+] Rekey complete.\n");
+    }
+
     pthread_t receive_thread, send_thread;
     pthread_create(&receive_thread, NULL, receive_loop, &peer);
     pthread_create(&send_thread, NULL, send_loop, &peer);
 
     pthread_join(send_thread, NULL);
     pthread_cancel(receive_thread);
+
+    //clear terminal on exit
+    printf("\033[2J\033[H");
+    fflush(stdout);
     
     close(sockfd);
     return 0;
@@ -188,16 +214,20 @@ static void *receive_loop(void *arg) {
 
         unsigned char *ciphertext = malloc(clen);
         if (!ciphertext || read_all(peer->fd, ciphertext, clen) <= 0) {
-            free(ciphertext);
+            if (ciphertext) {
+                free(ciphertext);
+            }
             break;
         }
 
         unsigned char *plaintext = malloc(clen - crypto_secretbox_MACBYTES);
-        if (plaintext && decrypt(plaintext, ciphertext, clen, nonce, peer->k_rx) == 0) {
+        if (plaintext && decrypt_msg(plaintext, ciphertext, clen, nonce, peer->k_rx) == 0) {
             fwrite(plaintext, 1, clen - crypto_secretbox_MACBYTES, stdout);
             fflush(stdout);
+            sodium_memzero(plaintext, clen - crypto_secretbox_MACBYTES);
         }
 
+        sodium_memzero(ciphertext, clen);
         free(ciphertext);
         free(plaintext);
     }
@@ -217,15 +247,20 @@ static void *send_loop(void *arg) {
         unsigned char nonce[NONCE_SIZE];
 
         randombytes_buf(nonce, NONCE_SIZE);
-        encrypt(ciphertext, (unsigned char *)line, mlen, nonce, peer->k_tx);
+        encrypt_msg(ciphertext, (unsigned char *)line, mlen, nonce, peer->k_tx);
 
         uint16_t net_clen = htons(clen);
         write_all(peer->fd, &net_clen, sizeof(net_clen));
         write_all(peer->fd, nonce, NONCE_SIZE);
         write_all(peer->fd, ciphertext, clen);
 
+        sodium_memzero(ciphertext, clen);
         free(ciphertext);
+        sodium_memzero(line, mlen);
     }
-    free(line);
+
+    if (line) {
+        free(line);
+    }
     return NULL;
 }

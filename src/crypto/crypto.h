@@ -18,10 +18,10 @@ void generated_keypair(keypair_t *kp);
 int key_exchange(int sockfd, int initiator, keypair_t *local,
                 unsigned char k_rx[SHARED_KEY_LEN],
                 unsigned char k_tx[SHARED_KEY_LEN]);
-int encrypt(unsigned char *out, const unsigned char *msg, size_t mlen,
+int encrypt_msg(unsigned char *out, const unsigned char *msg, size_t mlen,
             const unsigned char nonce[NONCE_LEN],
             const unsigned char key[SHARED_KEY_LEN]);
-int decrypt(unsigned char *out, const unsigned char *cipher, size_t clen,
+int decrypt_msg(unsigned char *out, const unsigned char *cipher, size_t clen,
             const unsigned char nonce[NONCE_LEN],
             const unsigned char key[SHARED_KEY_LEN]);
 #endif

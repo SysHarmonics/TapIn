@@ -25,7 +25,7 @@ static int base32_decode(const char *in, unsigned char *out, size_t outlen) {
     const char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
     size_t inlen = strlen(in);
     uint64_t buffer = 0;
-    int bits = 0, count = 0;
+    int bits = 0;
     size_t j = 0;
 
     for (size_t i = 0; i < inlen; ++i) {

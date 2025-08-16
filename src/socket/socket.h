@@ -1,5 +1,5 @@
-#ifndef TAPIN_SOCKET_H
-#define TAPIN_SOCKET_H
+#ifndef SOCKET_H
+#define SOCKET_H
 
 #include <stddef.h>
 #include <sys/types.h>

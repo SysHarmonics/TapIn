@@ -12,7 +12,7 @@
 
 #define BACKLOG 10 //max number of pending connections
 
-static void *get_in_addr(struct sockaddr *sa) {
+__attribute__((unused)) static inline void *get_in_addr(struct sockaddr *sa) {
     if (sa->sa_family == AF_INET) { 
         return &(((struct sockaddr_in*)sa)->sin_addr);
     }
