@@ -20,16 +20,6 @@ int key_exchange(int sockfd, int initiator, keypair_t *local,
         if (crypto_kx_client_session_keys(k_rx, k_tx, local->pk, local->sk, peer_pk) != 0)
             return -1;
 
-        printf("[Client] Local pubkey: ");
-        for (int i = 0; i < PUBKEY_LEN; i++) printf("%02x", local->pk[i]);
-        printf("\n[Client] Peer pubkey: ");
-        for (int i = 0; i < PUBKEY_LEN; i++) printf("%02x", peer_pk[i]);
-        printf("\n[Client] k_tx: ");
-        for (int i = 0; i < SHARED_KEY_LEN; i++) printf("%02x", k_tx[i]);
-        printf("\n[Client] k_rx: ");
-        for (int i = 0; i < SHARED_KEY_LEN; i++) printf("%02x", k_rx[i]);
-        printf("\n\n");
-
     } else {
         if (read_all(sockfd, peer_pk, PUBKEY_LEN) != PUBKEY_LEN) return -1;
         if (write_all(sockfd, local->pk, PUBKEY_LEN) != PUBKEY_LEN) return -1;
@@ -37,17 +27,7 @@ int key_exchange(int sockfd, int initiator, keypair_t *local,
         if (crypto_kx_server_session_keys(k_rx, k_tx, local->pk, local->sk, peer_pk) != 0)
             return -1;
 
-        printf("[Client] Local pubkey: ");
-        for (int i = 0; i < PUBKEY_LEN; i++) printf("%02x", local->pk[i]);
-        printf("\n[Client] Peer pubkey: ");
-        for (int i = 0; i < PUBKEY_LEN; i++) printf("%02x", peer_pk[i]);
-        printf("\n[Client] k_tx: ");
-        for (int i = 0; i < SHARED_KEY_LEN; i++) printf("%02x", k_tx[i]);
-        printf("\n[Client] k_rx: ");
-        for (int i = 0; i < SHARED_KEY_LEN; i++) printf("%02x", k_rx[i]);
-        printf("\n\n");
     }
-
     return 0;
 
 }
