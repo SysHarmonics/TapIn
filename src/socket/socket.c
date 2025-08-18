@@ -1,5 +1,4 @@
-#define _POSIX_C_SOURCE 200112L
-#define _GNU_SOURCE
+#define _POSIX_C_SOURCE 200809L
 #include "socket.h"
 
 #include <stdio.h>
