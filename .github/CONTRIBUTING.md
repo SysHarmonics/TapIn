@@ -82,48 +82,37 @@ To contribute, first:
 9. PR Review and Changes
 
     Maintainers may request changes → update your local branch, commit again, and push. The PR updates automatically.
-
     Keep discussion constructive and aligned with the [code of conduct](/.github/CODE_OF_CONDUCT.md).
 
 10. PR Merge
 
     Once approved, a maintainer merges your branch into the upstream project.
-
     You can then delete your branch both locally and on GitHub.
 
-### ✅ What Makes a Good PR - Acceptable Contributions
+## ✅ What Makes a Good PR - Acceptable Contributions
 
-New features or improvements to encryption, socket handling, or UX
+- New features or improvements to encryption, socket handling, or UX.
+- Portability enhancements (e.g., Windows support, cross-compilation).
+- Bug fixes or vulnerability patches.
+- Additional unit tests for edge cases or new functionality.
+- Documentation updates (README, man page, usage examples).
 
-Portability enhancements (e.g., Windows support, cross-compilation)
+## ⚠️ Contributions We May Not Accept
 
-Bug fixes or vulnerability patches
+- Committed test logs or output files.
+- Superficial or stylistic-only edits.
+- Large-scale refactoring without prior discussion in an issue.
 
-Additional unit tests for edge cases or new functionality
 
-Documentation updates (README, man page, usage examples)
+### Pull Request Guidelines
 
-#### ⚠️ Contributions We May Not Accept
+-   Use descriptive commit messages (e.g., Fix: memory leak in handshake)
+-   Open an issue first for large or structural changes
+-   Keep PRs focused and minimal
+-   Run make test before pushing
+-   Avoid widespread style/formatting changes unless scoped
 
-Committed test logs or output files
-
-Superficial or stylistic-only edits
-
-Large-scale refactoring without prior discussion in an issue
-
-##### Pull Request Guidelines
-
-Use descriptive commit messages (e.g., Fix: memory leak in handshake)
-
-Open an issue first for large or structural changes
-
-Keep PRs focused and minimal
-
-Run make test before pushing
-
-Avoid widespread style/formatting changes unless scoped
-
-###### 🙋‍♂️ Questions or Ideas?
+## 🙋‍♂️ Questions or Ideas?
 
 Have an idea but not sure if it fits? Open an issue or start a discussion. It helps others stay aligned and avoids duplicated effort.
 
