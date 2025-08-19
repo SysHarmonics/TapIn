@@ -1,6 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 #include "socket.h"
-
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -86,16 +86,41 @@ int tcp_connect(const char *host, const char *port) {
 }
 
 ssize_t read_all(int fd, void *buf, size_t len) {
+    struct pollfd fds[1];
+    fds[0].fd = fd;
+    fds[0].events = POLLIN;
+    fds[0].revents = 0;
+    
     size_t off = 0; 
     ssize_t n;
-    while (off < len) {
-        n = read(fd, (char*)buf + off, len - off);
-        if (n <= 0) return n;
-    off += n;
+    const int VALID_FILE_DESCRIPTORS = 1;
+    const int TIMEOUT = 0;
+    const int TIMEOUT_MS = 10000; // 10 seconds
+    const int ERROR = -1;
+    int poll_status = poll(fds,1,TIMEOUT_MS);
+   
+    if (poll_status < VALID_FILE_DESCRIPTORS){
+      fprintf(stderr, "File descriptors received no input. Errno value: %d\n", errno);
+      return errno;
+    } 
+    
+    if (poll_status == TIMEOUT) {
+      fprintf(stderr, "Connection timedout. Errno value: %d\n", errno);
+      return errno;
     }
-    return off;
-}
+    
+    if (poll_status == ERROR) {
+      fprintf(stderr, "Error occurred. Errno value: %d\n", errno);
+      return errno;
+    } 
 
+    while (off < len) {
+      n = read(fd, (char*)buf + off, len - off);
+      if (n <= 0) return n;
+      off += n;
+    }
+    return off; 
+}
 ssize_t write_all(int fd, const void *buf, size_t len) {
     size_t off = 0;
     ssize_t n;
