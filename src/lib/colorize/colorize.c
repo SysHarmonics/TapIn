@@ -15,19 +15,18 @@ char *RED = "\033[31;1m";
 char *RESET = "\033[0m";
 
 int valid_color(char *color) {
-  int i = 0;
   int found = 0;
   char *all_colors[] = {BLACK, GREEN, YELLOW, WHITE, RED};
   int len = sizeof(all_colors) / sizeof(all_colors[0]);
 
-  while (!found && i < len) {
+  for (int i = 0; i < len; i++) {
     found = strcmp(all_colors[i], color) == 0;
-    i++;
+    if (found) {
+      return found;
+    }
   }
 
-  if (!found) {
-    fprintf(stderr, "Invalid color received. See colorize.c for full list.\n");
-  }
+  fprintf(stderr, "Invalid color received. See colorize.c for full list.\n");
 
   return found;
 }
