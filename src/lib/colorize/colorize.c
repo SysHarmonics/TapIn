@@ -47,6 +47,6 @@ void print_with_colors(FILE *output_stream, char *color, char *input) {
 void confirm_colors() {
     char *colors[] = {BLACK, GREEN, YELLOW, WHITE, RED};
     for (int i = 0; i < 5; i++) {
-        print_with_colors(stdout, colors[i], "Hello World!");
+        print_with_colors(stdout, colors[i], "Hello World!\n");
     }
 }

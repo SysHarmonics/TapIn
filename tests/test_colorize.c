@@ -10,7 +10,7 @@ int main() {
 
     assert_status(valid_color("ORANGE") == 0, "Invalid color test");
     assert_status(valid_color("\033[2") == 0, "Invalid color test");
-    assert_status(valid_color(BLACK) == 0, "Valid color test");
+    assert_status(valid_color(BLACK) == 1, "Valid color test");
     assert_status(valid_color(RED) == 1, "Valid color test");
     assert_status(valid_color(WHITE) == 1, "Valid color test");
     confirm_colors(); //demo of print_with_colors.
