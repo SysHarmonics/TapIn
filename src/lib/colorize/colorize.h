@@ -14,6 +14,8 @@ extern char *RESET;
 //The escape sequence wouldn't be considered a printable character so 
 // I think we're ok
 
-void print_with_colors(char *color, char *input);
+void print_with_colors(FILE *output_stream, char *color, char *input);
+int valid_color(char *color);
+void confirm_colors();
 
 #endif
