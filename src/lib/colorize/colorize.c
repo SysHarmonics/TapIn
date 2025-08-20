@@ -36,7 +36,7 @@ int valid_color(char *color) {
 output_stream should be stdout, or stderr.
 Flushing stream manually for two reasons:
   1. So the stream can properly reset to the original foreground value.
-  2. So we don't end up with an extra newline if the user adds a newline
+  2. So we don't end up with an extra newline if the user adds a newline.
 */
 void print_with_colors(FILE *output_stream, char *color, char *input) {
   if (!valid_color(color)) {
