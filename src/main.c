@@ -51,6 +51,8 @@ typedef struct {
 static void *receive_loop(void *arg);
 static void *send_loop(void *arg);
 
+void print_help(void);
+
 int main(int argc, char *argv[]) {
     const char *listen_port = NULL;
     const char *connect_host = NULL;
