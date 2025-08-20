@@ -3,4 +3,4 @@
 
 void assert_status(int expression, char *template_string);
 
-#endif 
+#endif
