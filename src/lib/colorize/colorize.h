@@ -1,3 +1,4 @@
+#include  <stdio.h>
 #ifndef COLORIZE_H
 #define COLORIZE_H
 
