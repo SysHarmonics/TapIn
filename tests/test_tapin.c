@@ -166,10 +166,15 @@ void test_key_exchange_with_invite() {
         close(pipefd[0]);
 
         unsigned char client_rx[32], client_tx[32];
-        assert(tapped_in(fds[1], 1, invite, password, client_rx, client_tx) == 0);
 
-        write(pipefd[1], client_tx, 32);
-        write(pipefd[1], client_rx, 32);
+        int result = tapped_in(fds[1], 1, invite, password, client_rx, client_tx);
+        if (result != 0) {
+            fprintf(stderr, "[Client] tapped_in failed with code %d\n", result);
+            exit(1);
+        }
+
+        assert(write(pipefd[1], client_tx, 32) == 32);
+        assert(write(pipefd[1], client_rx, 32) == 32);
         close(pipefd[1]);
         exit(0);
     } else {
@@ -180,18 +185,31 @@ void test_key_exchange_with_invite() {
         unsigned char server_rx[32], server_tx[32];
         unsigned char client_tx_copy[32], client_rx_copy[32];
 
+        // server must do tapped_in FIRST in order to sync with the client
+        int result = tapped_in(fds[0], 0, invite, password, server_rx, server_tx);
+        if (result != 0) {
+            fprintf(stderr, "[Server] tapped_in failed with code %d\n", result);
+            exit(1);
+        }
+
         assert(read(pipefd[0], client_tx_copy, 32) == 32);
         assert(read(pipefd[0], client_rx_copy, 32) == 32);
         close(pipefd[0]);
 
-        assert(tapped_in(fds[0], 0, invite, password, server_rx, server_tx) == 0);
-        wait(NULL);
+        int status;
+        waitpid(pid, &status, 0);
+        if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+            fprintf(stderr, "[-] test_key_exchange_with_invite FAILED in child\n");
+            exit(1);
+        }
 
+        // debug
         print_key("client_tx", client_tx_copy);
         print_key("server_rx", server_rx);
         print_key("server_tx", server_tx);
         print_key("client_rx", client_rx_copy);
 
+        // final assertions
         assert(memcmp(client_tx_copy, server_rx, 32) == 0);
         assert(memcmp(server_tx, client_rx_copy, 32) == 0);
 
@@ -199,63 +217,87 @@ void test_key_exchange_with_invite() {
     }
 }
 
+
 void test_key_exchange_rekey() {
     int fds[2];
-    assert(pipe(fds) == 0);
+    assert(socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == 0);
 
     pid_t pid = fork();
     assert(pid >= 0);
 
-    const char *invite = "sample_invite";
-    const char *pw = "secret_password";
+    char invite[INVITE_LEN];
+    const char *password = "hunter2";
+    const char *ip = "192.168.0.42";
+    const char *port = "31337";
+
+    assert(invite_generate(invite, sizeof invite, password, ip, port) == 0);
 
     if (pid == 0) {
-        // Client
+        // --- Client process ---
         close(fds[0]);
 
         unsigned char k_tx1[32], k_rx1[32];
         unsigned char k_tx2[32], k_rx2[32];
 
-        int rc1 = tapped_in(fds[1], 0, NULL, NULL, k_tx1, k_rx1);
+        printf("[Client] Starting first key exchange...\n");
+        int rc1 = tapped_in(fds[1], 0, invite, password, k_tx1, k_rx1);
         assert(rc1 == 0);
+        printf("[Client] First tapped_in returned: %d\n", rc1);
 
-        int rc2 = tapped_in(fds[1], 0, NULL, NULL, k_tx2, k_rx2);
+        // Signal server to begin rekey
+        write(fds[1], "R", 1);
+
+        printf("[Client] Starting rekey...\n");
+        int rc2 = tapped_in(fds[1], 0, invite, password, k_tx2, k_rx2);
         assert(rc2 == 0);
+        printf("[Client] Rekey tapped_in returned: %d\n", rc2);
 
-        // Ensure rekey changed both directions
         assert(memcmp(k_tx1, k_tx2, 32) != 0);
         assert(memcmp(k_rx1, k_rx2, 32) != 0);
 
         write(fds[1], k_tx2, 32);
         write(fds[1], k_rx2, 32);
+
         close(fds[1]);
         exit(0);
     } else {
-        // Server
+        // --- Server process ---
         close(fds[1]);
 
-        unsigned char server_tx[32], server_rx[32];
+        unsigned char server_tx1[32], server_rx1[32];
+        unsigned char server_tx2[32], server_rx2[32];
         unsigned char client_tx[32], client_rx[32];
 
-        int rc = tapped_in(fds[0], 1, invite, pw, server_tx, server_rx);
+        printf("[Server] First key exchange...\n");
+        int rc = tapped_in(fds[0], 1, invite, password, server_tx1, server_rx1);
         assert(rc == 0);
-        // EXPECT(rc == -1, "should fail with bad invite/password");
+
+        // Wait for client to initiate rekey
+        char signal;
+        read(fds[0], &signal, 1);
+        assert(signal == 'R');
+
+        printf("[Server] Rekeying...\n");
+        int rc2 = tapped_in(fds[0], 1, invite, password, server_tx2, server_rx2);
+        assert(rc2 == 0);
 
         read(fds[0], client_tx, 32);
         read(fds[0], client_rx, 32);
         close(fds[0]);
 
-        assert(memcmp(client_tx, server_rx, 32) == 0);
-        assert(memcmp(server_tx, client_rx, 32) == 0);
+        assert(memcmp(client_tx, server_rx2, 32) == 0);
+        assert(memcmp(server_tx2, client_rx, 32) == 0);
 
         printf("[+] tapin rekey test passed!\n");
     }
 }
 
+
+
 void test_rekey_terminal_behavior() {
     int fds[2];
-    if (pipe(fds) != 0) {
-        perror("pipe");
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) != 0) {
+        perror("socketpair");
         exit(1);
     }
 
@@ -264,16 +306,22 @@ void test_rekey_terminal_behavior() {
         perror("fork");
         exit(1);
     }
+    
+    char invite[INVITE_LEN];
+    const char *password = "hunter2";
+    const char *ip = "192.168.0.42";
+    const char *port = "31337";
 
     if (pid == 0) {
         // Child: Initiator
         close(fds[0]);
         unsigned char k_tx1[32], k_rx1[32];
 
-        const char *invite = "invite123";
-        const char *pw = "pass123";
+        char invite[INVITE_LEN];
+        
+        assert(invite_generate(invite, sizeof invite, password, ip, port) == 0);
 
-        int rc1 = tapped_in(fds[1], 0, invite, pw, k_tx1, k_rx1);
+        int rc1 = tapped_in(fds[1], 0, invite, password, k_tx1, k_rx1);
         if (rc1 != 0) {
             fprintf(stderr, "[Client] Initial tapped_in failed\n");
             exit(1);
@@ -281,7 +329,7 @@ void test_rekey_terminal_behavior() {
 
         // Simulate manual --rekey call
         unsigned char k_tx2[32], k_rx2[32];
-        int rc2 = tapped_in(fds[1], 0, invite, pw, k_tx2, k_rx2);
+        int rc2 = tapped_in(fds[1], 0, invite, password, k_tx2, k_rx2);
         if (rc2 != 0) {
             fprintf(stderr, "[Client] Rekey tapped_in failed\n");
             exit(1);
@@ -301,10 +349,9 @@ void test_rekey_terminal_behavior() {
         close(fds[1]);
         unsigned char server_tx1[32], server_rx1[32];
 
-        const char *invite = "invite123";
-        const char *pw = "pass123";
+        write(fds[0], invite, INVITE_LEN);
 
-        int rc = tapped_in(fds[0], 1, invite, pw, server_tx1, server_rx1);
+        int rc = tapped_in(fds[0], 1, invite, password, server_tx1, server_rx1);
         if (rc != 0) {
             fprintf(stderr, "[Server] tapped_in failed\n");
             exit(1);
