@@ -11,10 +11,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Install dependencies (gcc, make, etc.)
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y build-essential libsodium-dev
 
+      - name: Cache build
+        uses: actions/cache@v4
+        with:
+          path: |
+            build
+            .cache
+          key: ${{ runner.os }}-build-${{ hashFiles('**/Makefile', '**/CMakeLists.txt', '**/*.c', '**/*.h') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
       # Build
       - name: Build project
         run: |
