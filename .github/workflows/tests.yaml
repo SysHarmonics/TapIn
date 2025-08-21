@@ -19,7 +19,7 @@ jobs:
         with:
           path: |
             TapIn         
-            src/**/*.o        # add subdirs if needed
+            src        # add subdirs if needed
           key: ${{ runner.os }}-build-${{ hashFiles('**/*.c', '**/*.h', 'Makefile') }}
           restore-keys: |
             ${{ runner.os }}-build-
@@ -34,7 +34,7 @@ jobs:
         with:
           path: |
             TapIn 
-            src/**/*.o
+            src
           key: ${{ runner.os }}-build-${{ hashFiles('**/*.c', '**/*.h', 'Makefile') }}
 
       - name: Run tests
