@@ -8,6 +8,7 @@ SRC := \
     src/socket/socket.c \
     src/crypto/crypto.c \
     src/synack/tapin.c \
+		src/lib/colorize/colorize.c \
 	src/invite/invite.c
 
 OBJ := $(SRC:.c=.o)
@@ -35,9 +36,14 @@ clean:
 TEST_SRC := \
     tests/test_invite.c \
     tests/test_crypto.c \
-    tests/test_tapin.c
+    tests/test_tapin.c \
+	tests/test_colorize.c
+TEST_HELPERS := tests/test_helpers.c
 
 TESTS := $(TEST_SRC:.c=)
+
+tests/test_colorize: tests/test_colorize.c src/lib/colorize/colorize.c $(TEST_HELPERS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 tests/test_invite: tests/test_invite.c src/socket/socket.c src/crypto/crypto.c src/invite/invite.c
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
