@@ -60,6 +60,7 @@ int main(int argc, char *argv[]) {
     const char *invite_code = NULL;
     const char *password = NULL;
     int rekey_requested = 0;
+    int used_invite = 0;
 
     static struct option long_options[] = {
         {"listen",   required_argument, 0, 'l'},
@@ -144,6 +145,7 @@ int main(int argc, char *argv[]) {
         }
         connect_host = ip_str;
         connect_port = port_str;
+        used_invite = 1;
 
         sockfd = tcp_connect(connect_host, connect_port);
         if (sockfd < 0) {
@@ -189,10 +191,11 @@ int main(int argc, char *argv[]) {
     }
 
     peer_t peer = { .fd = sockfd };
-    if (tapped_in(sockfd, initiator, invite_code, password, peer.k_rx, peer.k_tx) != 0) {
+    if (tapped_in(sockfd, initiator, used_invite ? invite_code: NULL, used_invite ? password: NULL, peer.k_rx, peer.k_tx) != 0) {
         close(sockfd);
         return 1;
     }
+    printf("[+] Key exchange successful. Launching chat loop...\n");
 
     if (rekey_requested) {
         printf("[*] Rekeying session...\n");
@@ -202,7 +205,7 @@ int main(int argc, char *argv[]) {
         sodium_memzero(peer.k_tx, sizeof(peer.k_tx));
 
         //perform key exchange again
-        if (tapped_in(sockfd, initiator, invite_code, password, peer.k_rx, peer.k_tx) != 0) {
+        if (tapped_in(sockfd, initiator, used_invite ? invite_code: NULL, used_invite ? password: NULL, peer.k_rx, peer.k_tx) != 0) {
             fprintf(stderr, "[-] Rekey failed.\n");
             close(sockfd);
             return 1;
@@ -253,8 +256,10 @@ static void *receive_loop(void *arg) {
     peer_t *peer = (peer_t *)arg;
      for (;;) {
         uint16_t net_clen;
-        if (read_all(peer->fd, &net_clen, sizeof(net_clen)) <= 0)
+        if (read_all(peer->fd, &net_clen, sizeof(net_clen)) <= 0) {
+            perror("[-] Failed to read message length");
             break;
+        }
 
         size_t clen = ntohs(net_clen);
         unsigned char nonce[NONCE_SIZE];
@@ -308,6 +313,10 @@ static void *send_loop(void *arg) {
         free(ciphertext);
         sodium_memzero(line, mlen);
     }
+
+    // debug
+    fprintf(stderr, "[-] Input closed or error occurred in send loop\n");
+
 
     if (line) {
         free(line);
