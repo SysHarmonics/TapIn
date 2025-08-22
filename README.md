@@ -18,7 +18,7 @@ Then you can run `make` to build the application.
 make test
 ``` 
 
-Since `make test` uses the `test/test_runner.bash` script you can also run new `test_*.c` files
+Since `make test` uses the `tests/test_runner.bash` script you can also run new `test_*.c` files
 you create directly by passing an argument to the script. The script only takes a single argument.
 If no argument is given the full test suite is run.
 
