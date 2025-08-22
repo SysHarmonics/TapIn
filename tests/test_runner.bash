@@ -1,30 +1,31 @@
 #!/bin/bash 
 
 # Ignore the src/main.c file
-linker_files=`find src -name "*.c" ! -name "main.c"`
+LINKER_FILES=$(find src -name "*.c" ! -name "main.c")
 CFLAGS="-Wall -O2 -g -std=c11 -Isrc"
 LDFLAGS="-lsodium -lpthread"
 
 # For this to work it needs to be a .c file
-single_test=$1
+SINGLE_TEST=$1
 
-test_files=`grep -l "main(" tests/test_*.c`
+TEST_FILES=$(grep -l "main(" tests/test_*.c)
 
-if [[ "$single_test" != "" ]];then
-  test_files="tests/${single_test}"
+if [[ "$SINGLE_TEST" != "" ]]; then
+  TEST_FILES="tests/${SINGLE_TEST}"
 fi
 
 # Now loop through all the test files that have a main
-for test_file in $test_files; do
+for TEST_FILE in $TEST_FILES; do
   printf "............START..............\n"
-  printf "[+] Running %s\n" $test_file
-  gcc $test_file $linker_files tests/test_helpers.c $CFLAGS $LDFLAGS -o tmp_test_runner 
+  printf "[+] Running %s\n" "$TEST_FILE"
+  gcc "$TEST_FILE" $LINKER_FILES tests/test_helpers.c $CFLAGS $LDFLAGS -o tmp_test_runner 
   ./tmp_test_runner
 
-  test_status=$?
+  TEST_STATUS=$?
 
-  if [ $test_status -ne 0 ]; then
+  if [ $TEST_STATUS -ne 0 ]; then
     echo "Since test failed exiting..."
   fi
   printf "............END................\n\n"
 done
+
