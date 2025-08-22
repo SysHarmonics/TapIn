@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <stdio.h>
 #include "common.h"
 
 int debug_enabled = 0;

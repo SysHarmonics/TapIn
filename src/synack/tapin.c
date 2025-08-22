@@ -17,11 +17,11 @@ int tapped_in(int fd, int initiator,
     }
 
     //debug
-    DEBUG_PRINT("[*] Starting key exchange as %s\n", initiator ? "initiator" : "listener");
+    debug_print("[*] Starting key exchange as %s\n", initiator ? "initiator" : "listener");
 
 
     if (key_exchange(fd, initiator, &self, k_rx, k_tx) != 0) {
-        DEBUG_PRINT("Key exchange has failed\n");
+        debug_print("Key exchange has failed\n");
         return -1;
     }
     return 0;

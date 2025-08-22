@@ -319,7 +319,7 @@ static void *send_loop(void *arg) {
     }
 
     // debug
-    DEBUG_PRINT("[-] Input closed or error occurred in send loop\n");
+    debug_print("[-] Input closed or error occurred in send loop\n");
 
 
     if (line) {
