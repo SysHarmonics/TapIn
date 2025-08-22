@@ -1,6 +1,6 @@
 #include "tapin.h"
 #include "crypto/crypto.h"
-
+#include "common.h"
 
 #include <stdio.h>
 
@@ -17,11 +17,11 @@ int tapped_in(int fd, int initiator,
     }
 
     //debug
-    printf("[*] Starting key exchange as %s\n", initiator ? "initiator" : "listener");
+    DEBUG_PRINT("[*] Starting key exchange as %s\n", initiator ? "initiator" : "listener");
 
 
     if (key_exchange(fd, initiator, &self, k_rx, k_tx) != 0) {
-        fprintf(stderr, "Key exchange has failed\n");
+        DEBUG_PRINT("Key exchange has failed\n");
         return -1;
     }
     return 0;

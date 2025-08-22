@@ -1,5 +1,6 @@
 #include "crypto.h"
 #include "socket/socket.h"
+#include "common.h"
 
 #include <sodium.h>
 #include <unistd.h>
@@ -16,26 +17,26 @@ int key_exchange(int sockfd, int initiator, keypair_t *local,
     if (initiator) {
         // debug
 
-        printf("[*] Sending public key...\n");
+        DEBUG_PRINT("[*] Sending public key...\n");
         if (write_all(sockfd, local->pk, PUBKEY_LEN) != PUBKEY_LEN) return -1;
 
 
-        printf("[*] Waiting for peer public key...\n");
+        DEBUG_PRINT("[*] Waiting for peer public key...\n");
         if (read_all(sockfd, peer_pk, PUBKEY_LEN) != PUBKEY_LEN) return -1;
 
-        printf("[*] Deriving session keys (client)...\n");
+        DEBUG_PRINT("[*] Deriving session keys (client)...\n");
         if (crypto_kx_client_session_keys(k_rx, k_tx, local->pk, local->sk, peer_pk) != 0)
             return -1;
 
     } else {
 
-        printf("[*] Waiting for initiator's public key...\n");
+        DEBUG_PRINT("[*] Waiting for initiator's public key...\n");
         if (read_all(sockfd, peer_pk, PUBKEY_LEN) != PUBKEY_LEN) return -1;
 
-        printf("[*] Sending own public key...\n");
+        DEBUG_PRINT("[*] Sending own public key...\n");
         if (write_all(sockfd, local->pk, PUBKEY_LEN) != PUBKEY_LEN) return -1;
 
-        printf("[*] Deriving session keys (server)...\n");
+        DEBUG_PRINT("[*] Deriving session keys (server)...\n");
         if (crypto_kx_server_session_keys(k_rx, k_tx, local->pk, local->sk, peer_pk) != 0)
             return -1;
 

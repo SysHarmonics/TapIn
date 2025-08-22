@@ -8,7 +8,8 @@ SRC := \
     src/socket/socket.c \
     src/crypto/crypto.c \
     src/synack/tapin.c \
-	src/invite/invite.c
+	src/invite/invite.c \
+    src/common.c
 
 OBJ := $(SRC:.c=.o)
 
@@ -39,14 +40,14 @@ TEST_SRC := \
 
 TESTS := $(TEST_SRC:.c=)
 
-tests/test_invite: tests/test_invite.c src/socket/socket.c src/crypto/crypto.c src/invite/invite.c
+tests/test_invite: tests/test_invite.c src/socket/socket.c src/crypto/crypto.c src/invite/invite.c src/common.c
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-tests/test_crypto: tests/test_crypto.c src/socket/socket.c src/crypto/crypto.c src/invite/invite.c
+tests/test_crypto: tests/test_crypto.c src/socket/socket.c src/crypto/crypto.c src/invite/invite.c src/common.c
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 # test_tapin requires tapin.c
-tests/test_tapin: tests/test_tapin.c src/socket/socket.c src/crypto/crypto.c src/invite/invite.c src/synack/tapin.c
+tests/test_tapin: tests/test_tapin.c src/socket/socket.c src/crypto/crypto.c src/invite/invite.c src/synack/tapin.c src/common.c
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 test: $(TESTS)

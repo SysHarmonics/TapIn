@@ -12,6 +12,7 @@
 #include "crypto/crypto.h"
 #include "synack/tapin.h"
 #include "invite/invite.h"
+#include "common.h"
 
 #define NONCE_SIZE 24
 
@@ -69,11 +70,12 @@ int main(int argc, char *argv[]) {
         {"password", required_argument, 0, 'p'},
         {"rekey",    no_argument,       0, 'r'},
         {"help",     no_argument,       0, 'h'},
+        {"debug",    no_argument,       0, 'd'},
         {0, 0, 0, 0}
     };
 
     int option;
-    while ((option = getopt_long(argc, argv, "l:c:i:p:r", long_options, NULL)) != -1) {
+    while ((option = getopt_long(argc, argv, "l:c:i:p:r:h:d", long_options, NULL)) != -1) {
         switch (option) {
             case 'l':
                 listen_port = optarg;
@@ -101,7 +103,9 @@ int main(int argc, char *argv[]) {
             case 'h':
                 print_help();
                 exit(0);
-
+            case 'd':
+                debug_enabled = 1;
+                break;
             default: 
                 fprintf(stderr, "Usage: %s [--listen <port>] [--connect <host:port>] [--invite <code>] [--password <secret>] [--rekey] [--help]\n", argv[0]);
                 exit(1);
@@ -171,7 +175,7 @@ int main(int argc, char *argv[]) {
             char invite[INVITE_LEN];
             if (invite_generate(invite, sizeof invite, password, local_ip, listen_port) == 0) {
                 printf("Invite Code: %s\n", invite);
-                printf("Share with peer: --invite %s --password <secret>\n", invite);
+                printf("Share with peer: --invite %s --password %s\n", invite, password);
             } else {
                 fprintf(stderr, "Failed to generate invite code\n");
             }
@@ -315,7 +319,7 @@ static void *send_loop(void *arg) {
     }
 
     // debug
-    fprintf(stderr, "[-] Input closed or error occurred in send loop\n");
+    DEBUG_PRINT("[-] Input closed or error occurred in send loop\n");
 
 
     if (line) {
