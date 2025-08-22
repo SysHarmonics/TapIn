@@ -7,6 +7,9 @@
 *.obj
 *.elf
 
+# ignores the test executables
+tmp_test_runner
+
 # Linker output
 *.ilk
 *.map
