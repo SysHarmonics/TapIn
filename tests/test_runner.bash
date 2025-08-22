@@ -1,4 +1,4 @@
-#!/usr/bin/bash 
+#!/bin/bash 
 
 # Ignore the src/main.c file
 linker_files=`find src -name "*.c" ! -name "main.c"`

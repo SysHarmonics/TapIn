@@ -31,32 +31,5 @@ $(BIN): $(OBJ)
 clean:
 	rm -f $(OBJ) $(BIN) $(TESTS)
 
-
-# --- Tests ---
-TEST_SRC := \
-    tests/test_invite.c \
-    tests/test_crypto.c \
-    tests/test_tapin.c \
-	tests/test_colorize.c
-TEST_HELPERS := tests/test_helpers.c
-
-TESTS := $(TEST_SRC:.c=)
-
-tests/test_colorize: tests/test_colorize.c src/lib/colorize/colorize.c $(TEST_HELPERS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-
-tests/test_invite: tests/test_invite.c src/socket/socket.c src/crypto/crypto.c src/invite/invite.c
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-
-tests/test_crypto: tests/test_crypto.c src/socket/socket.c src/crypto/crypto.c src/invite/invite.c
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-
-# test_tapin requires tapin.c
-tests/test_tapin: tests/test_tapin.c src/socket/socket.c src/crypto/crypto.c src/invite/invite.c src/synack/tapin.c
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-
-test: $(TESTS)
-	@echo "[*] Running unit tests..."
-	@for test in $(TESTS); do \
-		echo "Running $$test..."; \
-		./$$test || echo "$$test failed"; done
+test:
+	./tests/test_runner.bash
