@@ -9,9 +9,8 @@ SRC := \
     src/crypto/crypto.c \
     src/synack/tapin.c \
 	src/invite/invite.c \
-    src/common.c
-	src/lib/colorize/colorize.c \
-	src/invite/invite.c
+    src/common.c \
+	src/lib/colorize/colorize.c
 
 OBJ := $(SRC:.c=.o)
 
