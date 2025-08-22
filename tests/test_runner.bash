@@ -5,7 +5,7 @@ linker_files=`find src -name "*.c" ! -name "main.c"`
 CFLAGS="-Wall -O2 -g -std=c11 -Isrc"
 LDFLAGS="-lsodium -lpthread"
 
-# Now loop through all the test file that have a main
+# Now loop through all the test files that have a main
 for test_file in `grep -l "main(" tests/test_*.c`; do
   printf "............START..............\n"
   printf "[+] Running %s\n" $test_file

@@ -7,7 +7,7 @@
 *.obj
 *.elf
 
-# ignores the test executables
+# ignores the test executable
 tmp_test_runner
 
 # Linker output
