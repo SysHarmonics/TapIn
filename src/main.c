@@ -12,6 +12,7 @@
 #include "crypto/crypto.h"
 #include "synack/tapin.h"
 #include "invite/invite.h"
+#include "common.h"
 
 #define NONCE_SIZE 24
 
@@ -51,6 +52,8 @@ typedef struct {
 static void *receive_loop(void *arg);
 static void *send_loop(void *arg);
 
+void print_help(void);
+
 int main(int argc, char *argv[]) {
     const char *listen_port = NULL;
     const char *connect_host = NULL;
@@ -58,6 +61,7 @@ int main(int argc, char *argv[]) {
     const char *invite_code = NULL;
     const char *password = NULL;
     int rekey_requested = 0;
+    int used_invite = 0;
 
     static struct option long_options[] = {
         {"listen",   required_argument, 0, 'l'},
@@ -66,11 +70,12 @@ int main(int argc, char *argv[]) {
         {"password", required_argument, 0, 'p'},
         {"rekey",    no_argument,       0, 'r'},
         {"help",     no_argument,       0, 'h'},
+        {"debug",    no_argument,       0, 'd'},
         {0, 0, 0, 0}
     };
 
     int option;
-    while ((option = getopt_long(argc, argv, "l:c:i:p:r", long_options, NULL)) != -1) {
+    while ((option = getopt_long(argc, argv, "l:c:i:p:r:h:d", long_options, NULL)) != -1) {
         switch (option) {
             case 'l':
                 listen_port = optarg;
@@ -98,7 +103,9 @@ int main(int argc, char *argv[]) {
             case 'h':
                 print_help();
                 exit(0);
-
+            case 'd':
+                debug_enabled = 1;
+                break;
             default: 
                 fprintf(stderr, "Usage: %s [--listen <port>] [--connect <host:port>] [--invite <code>] [--password <secret>] [--rekey] [--help]\n", argv[0]);
                 exit(1);
@@ -142,6 +149,7 @@ int main(int argc, char *argv[]) {
         }
         connect_host = ip_str;
         connect_port = port_str;
+        used_invite = 1;
 
         sockfd = tcp_connect(connect_host, connect_port);
         if (sockfd < 0) {
@@ -167,7 +175,7 @@ int main(int argc, char *argv[]) {
             char invite[INVITE_LEN];
             if (invite_generate(invite, sizeof invite, password, local_ip, listen_port) == 0) {
                 printf("Invite Code: %s\n", invite);
-                printf("Share with peer: --invite %s --password <secret>\n", invite);
+                printf("Share with peer: --invite %s --password %s\n", invite, password);
             } else {
                 fprintf(stderr, "Failed to generate invite code\n");
             }
@@ -187,10 +195,11 @@ int main(int argc, char *argv[]) {
     }
 
     peer_t peer = { .fd = sockfd };
-    if (tapped_in(sockfd, initiator, invite_code, password, peer.k_rx, peer.k_tx) != 0) {
+    if (tapped_in(sockfd, initiator, used_invite ? invite_code: NULL, used_invite ? password: NULL, peer.k_rx, peer.k_tx) != 0) {
         close(sockfd);
         return 1;
     }
+    printf("[+] Key exchange successful. Launching chat loop...\n");
 
     if (rekey_requested) {
         printf("[*] Rekeying session...\n");
@@ -200,7 +209,7 @@ int main(int argc, char *argv[]) {
         sodium_memzero(peer.k_tx, sizeof(peer.k_tx));
 
         //perform key exchange again
-        if (tapped_in(sockfd, initiator, invite_code, password, peer.k_rx, peer.k_tx) != 0) {
+        if (tapped_in(sockfd, initiator, used_invite ? invite_code: NULL, used_invite ? password: NULL, peer.k_rx, peer.k_tx) != 0) {
             fprintf(stderr, "[-] Rekey failed.\n");
             close(sockfd);
             return 1;
@@ -251,8 +260,10 @@ static void *receive_loop(void *arg) {
     peer_t *peer = (peer_t *)arg;
      for (;;) {
         uint16_t net_clen;
-        if (read_all(peer->fd, &net_clen, sizeof(net_clen)) <= 0)
+        if (read_all(peer->fd, &net_clen, sizeof(net_clen)) <= 0) {
+            perror("[-] Failed to read message length");
             break;
+        }
 
         size_t clen = ntohs(net_clen);
         unsigned char nonce[NONCE_SIZE];
@@ -306,6 +317,10 @@ static void *send_loop(void *arg) {
         free(ciphertext);
         sodium_memzero(line, mlen);
     }
+
+    // debug
+    debug_print("[-] Input closed or error occurred in send loop\n");
+
 
     if (line) {
         free(line);

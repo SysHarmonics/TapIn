@@ -105,7 +105,7 @@ ssize_t read_all(int fd, void *buf, size_t len) {
     } 
     
     if (poll_status == TIMEOUT) {
-      fprintf(stderr, "Connection timedout. Errno value: %d\n", errno);
+      fprintf(stderr, "Connection timed out. Errno value: %d\n", errno);
       return errno;
     }
     

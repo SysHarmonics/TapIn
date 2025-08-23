@@ -8,8 +8,9 @@ SRC := \
     src/socket/socket.c \
     src/crypto/crypto.c \
     src/synack/tapin.c \
-		src/lib/colorize/colorize.c \
-	src/invite/invite.c
+	src/invite/invite.c \
+    src/common.c \
+	src/lib/colorize/colorize.c
 
 OBJ := $(SRC:.c=.o)
 
