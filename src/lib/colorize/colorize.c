@@ -42,8 +42,8 @@ void print_with_colors(FILE *output_stream, char *color, char *input) {
     return;
   }
 
-  if (strlen(input) > MAX_INPUT_LEN - 2) {
-    printf("Input too large. Consider shortening to a length <= 254 chars.;");
+  if (strlen(input) > MAX_INPUT_LEN) {
+    printf("Input too large. Consider shortening to a length <= 256 chars.;");
     return;
   }
   fprintf(output_stream, "%s%s%s", color, input, RESET);
