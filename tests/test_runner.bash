@@ -2,7 +2,7 @@
 
 # Ignore the src/main.c file
 LINKER_FILES=$(find src -name "*.c" ! -name "main.c")
-CFLAGS="-Wall -O2 -g -std=c11 -Isrc"
+CFLAGS="-Wall -O2 -g -std=c11 -Isrc -I src/lib/colorize"
 LDFLAGS="-lsodium -lpthread"
 
 # For this to work it needs to be a .c file
