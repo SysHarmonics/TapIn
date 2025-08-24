@@ -7,7 +7,7 @@
 void assert_status(int expression, char *template_string) {
   // Account for null terminator (2 chars) and passed|failed (6)
   if (strlen(template_string) > MAX_INPUT_LEN - 10) {
-    printf("Input too large. Consider shortening to a length <= 248 chars.;");
+    printf("Input too large. Consider shortening to a length <= 246 chars.;");
     return;
   }
 
