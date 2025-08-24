@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <lib/colorize/colorize.h>
+#include <colorize.h>
 #include "test_helpers.h"
 #include <stdlib.h>
 
