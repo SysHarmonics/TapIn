@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-
+#define MAX_INPUT_LEN 256
 // All colors are bright.
 // \033[ is the escape sequence to set the color.
 // The color settings are separated by semicolon(;)
@@ -39,6 +39,11 @@ Flushing stream manually for two reasons:
 */
 void print_with_colors(FILE *output_stream, char *color, char *input) {
   if (!valid_color(color)) {
+    return;
+  }
+
+  if (strlen(input) > MAX_INPUT_LEN - 2) {
+    printf("Input too large. Consider shortening to a length <= 254 chars.;");
     return;
   }
   fprintf(output_stream, "%s%s%s", color, input, RESET);
