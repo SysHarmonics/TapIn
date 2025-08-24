@@ -1,7 +1,7 @@
+#include <colorize.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <colorize.h>
 #define MAX_INPUT_LEN 256
 
 void assert_status(int expression, char *template_string) {
