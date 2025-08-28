@@ -1,5 +1,6 @@
 CC       := gcc
-CFLAGS   := -Wall -O2 -g -std=c11 -Isrc
+CFLAGS  := -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wcast-align -fanalyzer -O2 -std=c11
+INCLUDES = -I src -I src/lib/colorize
 LDFLAGS  := -lsodium -lpthread
 BIN      := tapin
 
@@ -13,6 +14,10 @@ SRC := \
 	src/lib/colorize/colorize.c
 
 OBJ := $(SRC:.c=.o)
+
+SRC_FILES := $(shell find src -name '*.c')
+
+LINKER_FILES := $(shell find src -name "*.c" ! -name "main.c")
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
@@ -28,6 +33,10 @@ $(BIN): $(OBJ)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+
+show-warns:
+	$(CC) $(CFLAGS) $(INCLUDES) -c $(SRC_FILES)
 
 clean:
 	rm -f $(OBJ) $(BIN) $(TESTS)
