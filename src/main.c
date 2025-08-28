@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L // Compiler complains if missing.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,7 +8,7 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-
+#include <stdint.h>
 #include "socket/socket.h"
 #include "crypto/crypto.h"
 #include "synack/tapin.h"
@@ -16,7 +17,8 @@
 
 #define NONCE_SIZE 24
 
-static int get_local_ip(char *buffer, size_t buflen) {
+// Using uint32 since socket can only support 32 bit addresses.
+static int get_local_ip(char *buffer, uint32_t buflen) {
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) return -1;
 
@@ -173,7 +175,7 @@ int main(int argc, char *argv[]) {
             }
 
             char invite[INVITE_LEN];
-            if (invite_generate(invite, sizeof invite, password, local_ip, listen_port) == 0) {
+            if (invite_generate(invite, password, local_ip, listen_port) == 0) {
                 printf("Invite Code: %s\n", invite);
                 printf("Share with peer: --invite %s --password %s\n", invite, password);
             } else {
@@ -272,7 +274,7 @@ static void *receive_loop(void *arg) {
             break;
 
         unsigned char *ciphertext = malloc(clen);
-        if (!ciphertext || read_all(peer->fd, ciphertext, clen) <= 0) {
+        if (!ciphertext || read_all(peer->fd, ciphertext, (long int)clen) <= 0) {
             if (ciphertext) {
                 free(ciphertext);
             }
@@ -296,19 +298,25 @@ static void *receive_loop(void *arg) {
 static void *send_loop(void *arg) {
     peer_t *peer = (peer_t *)arg;
     char *line = NULL;
-    size_t cap = 0;
+    size_t cap = 512;   // Since getline includes a malloc(bytes) call.
+                        // We will allocate up to 512 bytes of space
+                        // for the line buffer using cap.
+                        // So users can use max 512 chars per msg.
 
     while (getline(&line, &cap, stdin) != -1) {
         size_t mlen = strlen(line);
         size_t clen = mlen + crypto_secretbox_MACBYTES;
 
+        // malloc is a byte call. So since we are getting the len.
+        // We'll store the length in a 32 bit int (big number)
+        // Then allocate at most that much memory + 16 with malloc.
         unsigned char *ciphertext = malloc(clen);
         unsigned char nonce[NONCE_SIZE];
 
         randombytes_buf(nonce, NONCE_SIZE);
         encrypt_msg(ciphertext, (unsigned char *)line, mlen, nonce, peer->k_tx);
 
-        uint16_t net_clen = htons(clen);
+        size_t net_clen = htons((uint16_t)clen);
         write_all(peer->fd, &net_clen, sizeof(net_clen));
         write_all(peer->fd, nonce, NONCE_SIZE);
         write_all(peer->fd, ciphertext, clen);

@@ -2,6 +2,7 @@
 #include <sodium.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <arpa/inet.h>
 
@@ -21,17 +22,17 @@ static void base32_encode(const unsigned char *in, size_t inlen, char *out) {
     out[j] = '\0';
 }
 
-static int base32_decode(const char *in, unsigned char *out, size_t outlen) {
+static int base32_decode(const char *in, unsigned char *out, int outlen) {
     const char *alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
     size_t inlen = strlen(in);
     uint64_t buffer = 0;
     int bits = 0;
-    size_t j = 0;
+    int j = 0;
 
     for (size_t i = 0; i < inlen; ++i) {
         const char *p = strchr(alphabet, in[i]);
         if (!p) continue;
-        buffer = (buffer << 5) | (p - alphabet);
+        buffer = (buffer << 5) | (uint64_t)(p - alphabet);
         bits += 5;
         if (bits >= 8) {
             if (j >= outlen) return -1;
@@ -42,8 +43,10 @@ static int base32_decode(const char *in, unsigned char *out, size_t outlen) {
     return j;
 }
 
-int invite_generate(char *out, size_t outlen, const char *password, const char *ip, const char *port) {
-    unsigned char nonce[crypto_aead_chacha20poly1305_ietf_NPUBBYTES];
+// outlen was unused
+int invite_generate(char *out, const char *password, const char *ip, const char *port) {
+    uint32_t libsodium_byte_size = crypto_aead_chacha20poly1305_ietf_NPUBBYTES;
+    unsigned char nonce[libsodium_byte_size];
     randombytes_buf(nonce, sizeof nonce);
 
     char combo[128];
@@ -57,7 +60,10 @@ int invite_generate(char *out, size_t outlen, const char *password, const char *
         NULL, 0, NULL, nonce,
         (const unsigned char *)password);
 
-    unsigned char full[sizeof(nonce) + clen];
+    // What is this doing?
+    // Creating a character array the size of nonce bytes?
+    // libsodium is using unsigned ints to determine size
+    unsigned char full[libsodium_byte_size + clen];
     memcpy(full, nonce, sizeof(nonce));
     memcpy(full + sizeof(nonce), ciphertext, clen);
 
@@ -68,12 +74,11 @@ int invite_generate(char *out, size_t outlen, const char *password, const char *
 int invite_parse(const char *invite, const char *password, char *ip_out, char *port_out) {
     unsigned char decoded[128];
     int binlen = base32_decode(invite, decoded, sizeof(decoded));
-    if (binlen < (int)crypto_aead_chacha20poly1305_ietf_NPUBBYTES + crypto_aead_chacha20poly1305_ietf_ABYTES)
-        return -1;
+    if (binlen == -1) { return -1; }
 
     unsigned char *nonce = decoded;
     unsigned char *ciphertext = decoded + crypto_aead_chacha20poly1305_ietf_NPUBBYTES;
-    size_t clen = binlen - crypto_aead_chacha20poly1305_ietf_NPUBBYTES;
+    size_t clen = (uint16_t)binlen - crypto_aead_chacha20poly1305_ietf_NPUBBYTES;
 
     unsigned char decrypted[128];
     unsigned long long mlen;

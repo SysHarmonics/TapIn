@@ -85,14 +85,14 @@ int tcp_connect(const char *host, const char *port) {
     return sockfd;
 }
 
-ssize_t read_all(int fd, void *buf, size_t len) {
+long int read_all(int fd, void *buf, long int len) {
     struct pollfd fds[1];
     fds[0].fd = fd;
     fds[0].events = POLLIN;
     fds[0].revents = 0;
     
-    size_t off = 0; 
-    ssize_t n;
+    long int  off = 0; 
+    long int n;
     const int VALID_FILE_DESCRIPTORS = 1;
     const int TIMEOUT = 0;
     const int TIMEOUT_MS = 10000; // 10 seconds
@@ -115,19 +115,19 @@ ssize_t read_all(int fd, void *buf, size_t len) {
     } 
 
     while (off < len) {
-      n = read(fd, (char*)buf + off, len - off);
+      n = read(fd, (char*)buf + off, (size_t)(len - off));
       if (n <= 0) return n;
       off += n;
     }
     return off; 
 }
-ssize_t write_all(int fd, const void *buf, size_t len) {
+long int write_all(int fd, const void *buf, size_t len) {
     size_t off = 0;
     ssize_t n;
     while (off < len) {
         n = write(fd, (const char*)buf + off, len - off);
         if (n <= 0) return n;
-    off +=n;
+    off +=(size_t)n;
     }
-    return off;
+    return (long int)off;
 }
