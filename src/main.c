@@ -195,7 +195,12 @@ int main(int argc, char *argv[]) {
     }
 
     peer_t peer = { .fd = sockfd };
-    if (tapped_in(sockfd, initiator, used_invite ? invite_code: NULL, used_invite ? password: NULL, peer.k_rx, peer.k_tx) != 0) {
+    const char *inv = used_invite ? invite_code : NULL;
+    const char *pwd = password;
+
+    int tapin = tapped_in(sockfd, initiator, inv, pwd, peer.k_rx, peer.k_tx);
+    
+    if (tapin != 0) {
         close(sockfd);
         return 1;
     }
@@ -209,7 +214,9 @@ int main(int argc, char *argv[]) {
         sodium_memzero(peer.k_tx, sizeof(peer.k_tx));
 
         //perform key exchange again
-        if (tapped_in(sockfd, initiator, used_invite ? invite_code: NULL, used_invite ? password: NULL, peer.k_rx, peer.k_tx) != 0) {
+        tapin = tapped_in(sockfd, initiator, inv, pwd, peer.k_rx, peer.k_tx);
+
+        if (tapin != 0) {
             fprintf(stderr, "[-] Rekey failed.\n");
             close(sockfd);
             return 1;
